@@ -1,11 +1,36 @@
 import React, { useEffect, useState } from "react";
 import axios from "../axios";
 import "./Row.css";
+import Youtube from "react-youtube";
+import movieTrailer from "movie-trailer";
 
 const base_url = "https://image.tmdb.org/t/p/original/";
 
 function Row({ title, fetchUrl, isLargeRow }) {
   const [movies, setMovies] = useState([]);
+  const [trailerUrl, setTrailerUrl] = useState("");
+
+  const opts = {
+    height: "390",
+    width: "100%",
+    playerVars: {
+      // https://developers.google.com/youtube/player_parameters
+      autoplay: 1,
+    },
+  };
+
+  const handleClick = (movie) => {
+    if (trailerUrl) setTrailerUrl("");
+    else {
+      movieTrailer(movie?.name || "")
+        .then((url) => {
+          // To extract everything from question mark in youtube link.
+          const urlParams = new URLSearchParams(new URL(url).search);
+          setTrailerUrl(urlParams.get("v"));
+        })
+        .catch((error) => console.log(error));
+    }
+  };
 
   // A snippet of code which runs based on specific conditions
   useEffect(() => {
@@ -27,6 +52,7 @@ function Row({ title, fetchUrl, isLargeRow }) {
         {/* poster */}
         {movies.map((movie) => (
           <img
+            onClick={() => handleClick(movie)}
             key={movie.id}
             // If it is a large row then take row_posterLarge as class.
             className={`row_poster ${isLargeRow && "row_posterLarge"}`}
@@ -37,6 +63,7 @@ function Row({ title, fetchUrl, isLargeRow }) {
           />
         ))}
       </div>
+      {trailerUrl && <Youtube videoId={trailerUrl} opts={opts} />}
     </div>
   );
 }
